@@ -5,7 +5,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.awt.geom.Line2D;
-import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,7 +13,7 @@ import java.util.Set;
 
 
 public class buildingSiteTest {
-    BuildingSite buildingSite = new BuildingSite();
+    /*BuildingSite buildingSite = new BuildingSite();
 
 
     @Test
@@ -96,7 +95,7 @@ public class buildingSiteTest {
         points.add(new Point2D.Double(6,8 ));
         points.add(new Point2D.Double(5,8 ));
         points.add(new Point2D.Double(7,4 ));
-    }
+    }*/
 
 
 }

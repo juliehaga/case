@@ -3,8 +3,8 @@ package com.example.demo.Constraints;
 import lombok.Data;
 
 @Data
-class Feature {
-    Geometry geometry;
-    Properties properties;
-    String type;
+public class Feature {
+    private Geometry geometry;
+    private Properties properties;
+    private String type;
 }

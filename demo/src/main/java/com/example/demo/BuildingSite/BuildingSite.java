@@ -18,24 +18,28 @@ public class BuildingSite {
     private List<PolygonArea> heightPlateaus;
     private List<PolygonArea> splitBuildingLimits;
 
-    private double meanXcoord;
-    private double meanYcoord;
+    public BuildingSite(List<PolygonArea> buildingLimits, List<PolygonArea> heightPlateaus) {
+        this.buildingLimits = buildingLimits;
+        this.heightPlateaus = heightPlateaus;
+        this.splitBuildingLimits = new ArrayList<>();
+        calculatesplitBuildingLimits();
+    }
 
 
-    public void calculatesplitBuildingLimits(){
+    private void calculatesplitBuildingLimits(){
         for (PolygonArea buildingArea: buildingLimits){
             for(PolygonArea heightPlat: heightPlateaus){
                 PolygonArea splitBuildLimit = new PolygonArea();
-                splitBuildLimit.coordinates = new ArrayList<>(calculateOverlapArea(buildingArea.coordinates, heightPlat.coordinates));
-                splitBuildLimit.elevation = heightPlat.elevation;
-                
+                splitBuildLimit.setCoordinates(new ArrayList<>(calculateOverlapArea(buildingArea.getCoordinates(), heightPlat.getCoordinates())));
+                splitBuildLimit.setElevation(heightPlat.getElevation());
+                this.splitBuildingLimits.add(splitBuildLimit);
             }
         }
     }
 
 
 
-    public Set<Point2D> calculateOverlapArea(List<Point2D> polygon1, List<Point2D> polygon2){
+    private Set<Point2D> calculateOverlapArea(List<Point2D> polygon1, List<Point2D> polygon2){
 
         Path2D.Double polygon1Shape = createPolygonShape(polygon2);
         Path2D.Double polygon2Shape = createPolygonShape(polygon2);
@@ -62,7 +66,7 @@ public class BuildingSite {
 
         for(Line2D line: polygon1){
             for (Line2D line2 : polygon2){
-                //Finner alle skjæringspunkt
+                //Find all intersection points
                 Point2D point = pointsOfInterSectionLines(line, line2);
                 if (!Double.isNaN(point.getX()) && !Double.isNaN(point.getY())) {
                     //Valid intersection is found
@@ -74,7 +78,7 @@ public class BuildingSite {
         return allInterSectionPoints;
     }
 
-    public Point2D pointsOfInterSectionLines(Line2D line1, Line2D line2){
+    private Point2D pointsOfInterSectionLines(Line2D line1, Line2D line2){
         // Line1 represented as a1x + b1y = c1
         BigDecimal a1 = new BigDecimal(line1.getY2() - line1.getY1());
         BigDecimal b1 = new BigDecimal(line1.getX1() - line1.getX2());
@@ -88,13 +92,8 @@ public class BuildingSite {
 
         BigDecimal determinant = a1.multiply(b2).subtract(a2.multiply(b1));
 
-        if (determinant.equals(new BigDecimal(0))) {  return new Point.Double(Double.NaN, Double.NaN); }
 
-        BigDecimal test = b2.multiply(c1);
-        BigDecimal test2 = b1.multiply(c2);
-
-        BigDecimal test3 = test.subtract(test2);
-
+        if (determinant.doubleValue()==BigDecimal.ZERO.doubleValue()) {  return new Point.Double(Double.NaN, Double.NaN); }
 
 
         BigDecimal x = (b2.multiply(c1).subtract(b1.multiply(c2))).divide(determinant, MathContext.DECIMAL128);
@@ -117,9 +116,7 @@ public class BuildingSite {
 
     private boolean lineSegmentContainsPoint(Line2D line, Point2D point){
         if (point.getX() >= Math.min(line.getX1(), line.getX2()) && point.getX() <= Math.max(line.getX1(), line.getX2())){
-            if (point.getY() >= Math.min(line.getY1(), line.getY2()) && point.getY() <= Math.max(line.getY1(), line.getY2())){
-                return true;
-            }
+            return point.getY() >= Math.min(line.getY1(), line.getY2()) && point.getY() <= Math.max(line.getY1(), line.getY2());
         }
         return false;
     }
@@ -138,7 +135,7 @@ public class BuildingSite {
         return pol; 
     }
 
-    public List<Line2D> polygonToLines(List<Point2D> polygon){
+    private List<Line2D> polygonToLines(List<Point2D> polygon){
         List<Line2D> lines = new ArrayList<>();
 
         for (int i = 0; i < polygon.size() -1; i++){

@@ -2,6 +2,6 @@ package com.example.demo.Constraints;
 
 import lombok.Data;
 @Data
-class Properties {
-    int elevation;
+public class Properties {
+    private int elevation;
 }

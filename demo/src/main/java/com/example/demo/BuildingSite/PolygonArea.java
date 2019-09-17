@@ -1,9 +1,11 @@
 package com.example.demo.BuildingSite;
 
+import lombok.Data;
 import java.awt.geom.Point2D;
 import java.util.List;
 
-class PolygonArea {
-    List<Point2D> coordinates;
-    int elevation;
+@Data
+public class PolygonArea {
+    private List<Point2D> coordinates;
+    private int elevation;
 }
