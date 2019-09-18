@@ -1,7 +1,8 @@
-package com.example.demo.BuildingSite;
+package com.example.demo.BuildingSiteProperties;
 
 import lombok.Data;
-
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -13,20 +14,25 @@ import java.util.List;
 
 
 @Data
-public class BuildingSite {
+public class BuildingSiteProperties {
+    private @Id @GeneratedValue Long id;
     private List<PolygonArea> buildingLimits;
     private List<PolygonArea> heightPlateaus;
     private List<PolygonArea> splitBuildingLimits;
 
-    public BuildingSite(List<PolygonArea> buildingLimits, List<PolygonArea> heightPlateaus) {
+    public BuildingSiteProperties() {
+        this.buildingLimits = null;
+        this.heightPlateaus = null;
+        this.splitBuildingLimits = new ArrayList<>();
+    }
+
+    public BuildingSiteProperties(List<PolygonArea> buildingLimits, List<PolygonArea> heightPlateaus) {
         this.buildingLimits = buildingLimits;
         this.heightPlateaus = heightPlateaus;
         this.splitBuildingLimits = new ArrayList<>();
-        calculatesplitBuildingLimits();
     }
 
-
-    private void calculatesplitBuildingLimits(){
+    public void calculatesplitBuildingLimits(){
         for (PolygonArea buildingArea: buildingLimits){
             for(PolygonArea heightPlat: heightPlateaus){
                 PolygonArea splitBuildLimit = new PolygonArea();
@@ -37,11 +43,47 @@ public class BuildingSite {
         }
     }
 
+    public boolean validInput(){
+        double totalBuildingLimitArea = calculateAreaOfPolygon(this.buildingLimits.get(0).getCoordinates());
+        double totalSplitBuildingLimitArea = 0;
+        for (PolygonArea area: this.splitBuildingLimits){
+            totalSplitBuildingLimitArea += calculateAreaOfPolygon(area.getCoordinates());
+        }
+        return !(totalBuildingLimitArea > totalSplitBuildingLimitArea);
+    }
 
+    public double calculateAreaOfPolygon(List<Point2D> coord){
+        double totalArea = 0;
+        for(int i =0; i < coord.size()-1; i++){
+            double a1 = coord.get(i).getX()*coord.get(i+1).getY();
+            double a2 = coord.get(i).getY()*coord.get(i+1).getX();
+            double area = a1-a2;
+            totalArea += area;
+        }
 
-    private Set<Point2D> calculateOverlapArea(List<Point2D> polygon1, List<Point2D> polygon2){
+        return Math.abs(totalArea/2);
+    }
 
-        Path2D.Double polygon1Shape = createPolygonShape(polygon2);
+    private Set<Point2D> calculateNotOverlappedArea(List<Point2D> buildingLimit, List<Point2D> polygon1){
+        //for at dette skal fungere må vi være sikker på at koordinatene ligger i "klokkeriktig rekkefølge"
+
+        Path2D.Double buildingLimitShape = createPolygonShape(buildingLimit);
+        Path2D.Double polygonShape = createPolygonShape(polygon1);
+
+        Set<Point2D> intersections = pointsOfInterSectionPolygon(polygonToLines(buildingLimit), polygonToLines(polygon1));
+
+        //check if corner is in buildingLimit and NOT in polygon 1
+        for (Point2D corner: buildingLimit){
+            if (!polygonShape.contains(corner)){
+                //not overlapping
+                intersections.add(corner);
+            }
+        }
+        return intersections;
+    }
+
+    public Set<Point2D> calculateOverlapArea(List<Point2D> polygon1, List<Point2D> polygon2){
+        Path2D.Double polygon1Shape = createPolygonShape(polygon1);
         Path2D.Double polygon2Shape = createPolygonShape(polygon2);
 
         Set<Point2D> intersections = pointsOfInterSectionPolygon(polygonToLines(polygon1), polygonToLines(polygon2));
@@ -71,6 +113,7 @@ public class BuildingSite {
                 if (!Double.isNaN(point.getX()) && !Double.isNaN(point.getY())) {
                     //Valid intersection is found
                     allInterSectionPoints.add(point);
+
                 }
 
             }
@@ -78,7 +121,7 @@ public class BuildingSite {
         return allInterSectionPoints;
     }
 
-    private Point2D pointsOfInterSectionLines(Line2D line1, Line2D line2){
+    public Point2D pointsOfInterSectionLines(Line2D line1, Line2D line2){
         // Line1 represented as a1x + b1y = c1
         BigDecimal a1 = new BigDecimal(line1.getY2() - line1.getY1());
         BigDecimal b1 = new BigDecimal(line1.getX1() - line1.getX2());
@@ -121,7 +164,6 @@ public class BuildingSite {
         return false;
     }
 
-
     private Path2D.Double createPolygonShape(List<Point2D> polygon){
   
         Path2D.Double pol = new Path2D.Double(Path2D.WIND_EVEN_ODD, polygon.size());
@@ -135,7 +177,7 @@ public class BuildingSite {
         return pol; 
     }
 
-    private List<Line2D> polygonToLines(List<Point2D> polygon){
+    public List<Line2D> polygonToLines(List<Point2D> polygon){
         List<Line2D> lines = new ArrayList<>();
 
         for (int i = 0; i < polygon.size() -1; i++){
